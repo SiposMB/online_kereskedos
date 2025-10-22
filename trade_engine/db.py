@@ -36,6 +36,41 @@ def init_db_command():
     init_db()
     click.echo('Initialized the database.')
 
+def fill_dummy_data():
+    db = get_db()
+
+    with current_app.open_resource('create_dummy_data.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+
+
+    db.commit()
+
+@click.command('dummy-db')
+def fill_dummy_db_command():
+    """Feltöltöm az adatbázist kamu adatokkal"""
+    fill_dummy_data()
+    click.echo('Filled database with dummy data.')
+
+def get_traders():
+    db = get_db()
+
+    traders = db.execute(
+        "SELECT * FROM traders"
+    ).fetchall()
+    traders = {row["resource_code"]: row["qty"] for row in traders}
+
+    balance = db.execute(
+        "SELECT * FROM accounts_wide",).fetchall()
+    balance = {row["resource_code"]: row["qty"] for row in balance}
+
+
+    return traders, balance
+
+@click.command('print-traders')
+def print_traders_command():
+    """Feltöltöm az adatbázist kamu adatokkal"""
+    traders, _ = get_traders()
+    click.echo(traders)
 
 sqlite3.register_converter(
     "timestamp", lambda v: datetime.fromisoformat(v.decode())
@@ -44,3 +79,5 @@ sqlite3.register_converter(
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
+    app.cli.add_command(fill_dummy_db_command)
+    app.cli.add_command(print_traders_command)

@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS ledger;
 DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS resources;
 DROP TABLE IF EXISTS traders;
+DROP VIEW IF EXISTS accounts_wide;
 
 -- Traders
 CREATE TABLE traders (
@@ -24,7 +25,7 @@ CREATE TABLE resources (
 
 -- Seed resources (remove the Python list, this is pure SQL)
 INSERT INTO resources (code, name) VALUES
-  ("CASH", "Cash")
+  ("CASH", "Cash"),
   ('WOOD',  'Wood'),
   ('STONE', 'Stone'),
   ('IRON',  'Iron'),

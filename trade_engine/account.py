@@ -24,9 +24,6 @@ def get_account(account_id):
         return jsonify({"error": "Nincs ilyen számla"}), 404
     
 
-
-    # 
-
     balance = db.execute(
         "SELECT * FROM accounts_wide WHERE trader_id = ?"
         , (account_id,)).fetchone()
