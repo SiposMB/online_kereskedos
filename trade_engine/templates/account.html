@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <title>Wallstreet</title>
+    </head>
+
+    <body>
+        <h1>Számlaszám:</h1>
+        <form>
+
+            <label for="nev">Azonosító:
+          </label>
+            <input type="number" min="100" max="999" id="nev" name="nev"
+            placeholder="Írja be a számlaszámot!">
+
+            <input type="submit">
+          
+        </form>
+
+        <h1>Név</h1>
+        <form action="{{ url_for('account.submit_trade') }}" method="post">
+            <table border="1" cellpadding="8" style="border-collapse: collapse; width: 70%; margin: 20px auto; text-align: center;">
+              <thead style="background-color: #f0f0f0;">
+                <tr>
+                  <th>Nyersanyag</th>
+                  <th>Egyenleg</th>
+                  <th>Vétel</th>
+                  <th>Eladás</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for material in materials %}
+                <tr>
+                  <td>{{ material.name }}</td>
+                  <td>{{ material.balance }}</td>
+                  <td>
+                    {% if loop.first %}
+                      <!-- A "pénz" sorban nem engedünk vásárlást -->
+                      <input type="number" name="buy_{{ material.id }}" placeholder="-" disabled>
+                    {% else %}
+                      <input 
+                        type="number" 
+                        name="buy_{{ material.id }}" 
+                        min="0" 
+                        max="{{ money_balance // material.rate }}" 
+                        placeholder="{{ money_balance // material.rate }}"
+                      >
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if loop.first %}
+                      <input type="number" name="sell_{{ material.id }}" placeholder="-" disabled>
+                    {% else %}
+                      <input 
+                        type="number" 
+                        name="sell_{{ material.id }}" 
+                        min="0" 
+                        max="{{ material.balance }}" 
+                        placeholder="{{ material.balance }}"
+                      >
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          
+            <div style="text-align: center;">
+              <button type="submit" style="padding: 10px 20px; font-size: 16px;">Küldés</button>
+            </div>
+          </form>
+          
+    </body>
+</html>
