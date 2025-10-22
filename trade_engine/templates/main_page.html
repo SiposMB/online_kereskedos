@@ -95,8 +95,11 @@
       e.preventDefault();
       const id = document.getElementById("nev").value;
       try {
-        const response = await fetch(`/api/account/${id}`);
-        if (!response.ok) throw new Error("Nincs ilyen számla");
+        const response = await fetch(`/account/api/account/${id}`);
+        if (!response.ok){
+          throw new Error("Nincs ilyen számla");
+          console.log(response)
+        }
         const data = await response.json();
 
         // Megjelenítjük a nevet

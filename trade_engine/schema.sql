@@ -72,18 +72,17 @@ CREATE TABLE steals (
   FOREIGN KEY (resource_id)    REFERENCES resources(id) ON DELETE RESTRICT
 );
 
--- Optional: a convenience VIEW that pivots accounts into wide columns per resource.
--- This gives you columns WOOD, STONE, IRON, FOOD without denormalizing storage.
 CREATE VIEW accounts_wide AS
 WITH base AS (
   SELECT
     t.id   AS trader_id,
     t.name AS trader_name,
-    r.code,
-    a.amount
+    r.code AS code,
+    COALESCE(a.amount, 0) AS amount
   FROM traders t
-  JOIN accounts a ON a.trader_id = t.id
-  JOIN resources r ON r.id = a.resource_id
+  CROSS JOIN resources r
+  LEFT JOIN accounts a
+    ON a.trader_id = t.id AND a.resource_id = r.id
 )
 SELECT
   trader_id,

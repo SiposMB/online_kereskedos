@@ -112,12 +112,3 @@ SET amount = (
     AND totals.resource_id = a.resource_id
 );
 
--- ---------- (optional) recompute traders.cash if column exists ----------
--- cash change is negative of cash_paid (paying reduces cash, receiving increases)
-UPDATE traders
-SET cash = cash - COALESCE((
-  SELECT SUM(cash_paid)
-  FROM ledger l
-  WHERE l.trader_id = traders.id
-), 0)
-WHERE EXISTS (SELECT 1 FROM pragma_table_info('traders') WHERE name='cash');

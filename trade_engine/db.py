@@ -77,8 +77,19 @@ sqlite3.register_converter(
     "timestamp", lambda v: datetime.fromisoformat(v.decode())
 )
 
+@click.command('print-balance')
+def print_balance_command():
+    """Feltöltöm az adatbázist kamu adatokkal"""
+    _, balance = get_traders()
+    click.echo(balance)
+
+sqlite3.register_converter(
+    "timestamp", lambda v: datetime.fromisoformat(v.decode())
+)
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
     app.cli.add_command(fill_dummy_db_command)
     app.cli.add_command(print_traders_command)
+    app.cli.add_command(print_balance_command)
