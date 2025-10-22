@@ -54,14 +54,15 @@ def fill_dummy_db_command():
 def get_traders():
     db = get_db()
 
-    traders = db.execute(
+    traders_rows = db.execute(
         "SELECT * FROM traders"
     ).fetchall()
-    traders = {row["resource_code"]: row["qty"] for row in traders}
+    traders = [dict(row) for row in traders_rows]
 
-    balance = db.execute(
-        "SELECT * FROM accounts_wide",).fetchall()
-    balance = {row["resource_code"]: row["qty"] for row in balance}
+    balance_rows = db.execute(
+        "SELECT * FROM accounts_wide"
+    ).fetchall()
+    balance = [dict(row) for row in balance_rows]
 
 
     return traders, balance
