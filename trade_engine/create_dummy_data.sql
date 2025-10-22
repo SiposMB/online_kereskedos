@@ -29,9 +29,7 @@ SELECT printf('Trader %03d', n) FROM seq;
 -- FROM traders t
 -- CROSS JOIN resources r
 -- ON CONFLICT(trader_id, resource_id) DO NOTHING;
-
 -- ---------- random ledger (buys/sells) ----------
-
 WITH
   params(num_traders, num_trades, num_steals) AS (VALUES (20, 400, 60)),
   seq(n) AS (
@@ -41,9 +39,9 @@ WITH
   )
 INSERT INTO ledger (trader_id, resource_id, cash_paid, amount, trade_time)
 SELECT
-  -- random trader & resource
+  -- random trader & non-CASH resource
   (SELECT id FROM traders ORDER BY abs(random()) LIMIT 1) AS trader_id,
-  (SELECT id FROM resources ORDER BY abs(random()) LIMIT 1) AS resource_id,
+  (SELECT id FROM resources WHERE code <> 'CASH' ORDER BY abs(random()) LIMIT 1) AS resource_id,
   -- buy or sell
   CASE abs(random()) % 2
     WHEN 0 THEN  -- BUY: acquire qty>0, pay cash>0
@@ -57,35 +55,19 @@ SELECT
   END AS amount,
   datetime('now', printf('-%d hours', abs(random() % 720))) AS trade_time;
 
--- ---------- random steals ----------
-;
-WITH
-  params(num_traders, num_trades, num_steals) AS (VALUES (20, 400, 60)),
-  seq(n) AS (
-    SELECT 1
-    UNION ALL
-    SELECT n+1 FROM seq, params WHERE n < params.num_steals
-  ),
-  pairs AS (
-    SELECT
-      (SELECT id FROM traders ORDER BY abs(random()) LIMIT 1) AS a,
-      (SELECT id FROM traders ORDER BY abs(random()) LIMIT 1) AS b
-    FROM seq
-  )
-INSERT INTO steals (stealer_id, stolen_from_id, resource_id, amount, steal_time)
-SELECT
-  CASE WHEN a=b THEN (SELECT id FROM traders t ORDER BY abs(random()) LIMIT 1) ELSE a END AS stealer_id,
-  CASE WHEN a=b THEN (SELECT id FROM traders t ORDER BY abs(random()) LIMIT 1) ELSE b END AS stolen_from_id,
-  (SELECT id FROM resources ORDER BY abs(random()) LIMIT 1) AS resource_id,
-  (abs(random()) % 5) + 1 AS amount,
-  datetime('now', printf('-%d hours', abs(random() % 720))) AS steal_time
-FROM pairs;
+-- Make sure every (trader, resource) row exists (including CASH)
+INSERT OR IGNORE INTO accounts (trader_id, resource_id, amount)
+SELECT t.id, r.id, 0
+FROM traders t
+CROSS JOIN resources r;
 
 -- ---------- recompute accounts from events ----------
 WITH totals AS (
   SELECT
     t.id   AS trader_id,
     r.id   AS resource_id,
+    r.code AS code,
+    -- quantities come from ledger.amount ± steals; CASH comes from -SUM(cash_paid)
     COALESCE((
       SELECT SUM(l.amount)
       FROM ledger l
@@ -100,15 +82,44 @@ WITH totals AS (
       SELECT SUM(s2.amount)
       FROM steals s2
       WHERE s2.stolen_from_id = t.id AND s2.resource_id = r.id
-    ), 0) AS total_amount
+    ), 0) AS qty_total,
+    COALESCE((
+      SELECT -SUM(l2.cash_paid)          -- paying reduces CASH; receiving increases
+      FROM ledger l2
+      WHERE l2.trader_id = t.id
+    ), 0) AS cash_total
   FROM traders t
   CROSS JOIN resources r
 )
 UPDATE accounts AS a
-SET amount = (
-  SELECT total_amount
-  FROM totals
-  WHERE totals.trader_id = a.trader_id
-    AND totals.resource_id = a.resource_id
-);
+SET amount = CASE
+  WHEN (SELECT code FROM resources WHERE id = a.resource_id) = 'CASH'
+    THEN MAX(0, (SELECT cash_total FROM totals
+                 WHERE totals.trader_id = a.trader_id
+                   AND totals.resource_id = a.resource_id))
+  ELSE
+    MAX(0, (SELECT qty_total FROM totals
+            WHERE totals.trader_id = a.trader_id
+              AND totals.resource_id = a.resource_id))
+END;
 
+
+-- Dummy accounts
+BEGIN;
+
+-- 0) Make sure every (trader, resource) row exists
+INSERT OR IGNORE INTO accounts (trader_id, resource_id, amount)
+SELECT t.id, r.id, 0
+FROM traders t
+CROSS JOIN resources r;
+
+-- 1) Randomize balances per row (CASH gets a bigger random range)
+UPDATE accounts
+SET amount = CASE (
+    SELECT code FROM resources WHERE id = accounts.resource_id
+  )
+  WHEN 'CASH' THEN abs(random() % 20000) + 1000   -- 1,000 .. 20,999
+  ELSE abs(random() % 50) + 1                      -- 1 .. 50
+END;
+
+COMMIT;
