@@ -1,0 +1,10 @@
+<table class="materials-table">
+  <thead>
+    <tr><th>Resource</th><th>Balance</th></tr>
+  </thead>
+  <tbody>
+  {% for code, qty in g.balance.items() %}
+    <tr><td>{{ code }}</td><td>{{ qty }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>

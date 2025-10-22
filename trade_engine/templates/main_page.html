@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Wallstreet 1.2 | Nyersanyag kereskedés</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #fafafa;
+    }
+    .container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+    }
+    .segment {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #segmentA { flex: 2; }
+    #segmentC { flex: 1; }
+    #segmentB {
+      display: none;          /* kezdetben rejtve */
+      margin: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- 🅰 SZEGMENS -->
+    <div id="segmentA" class="segment">
+      <h1>Számlaszám:</h1>
+      <form id="account-form">
+        <label for="nev">Azonosító:</label>
+        <input type="number" min="100" max="999" id="nev" name="nev"
+               placeholder="Írja be a számlaszámot!" required>
+        <button type="submit">Keresés</button>
+      </form>
+
+      <!-- 🅱 SZEGMENS (kezdetben rejtve) -->
+      <div id="segmentB">
+        <h1 id="owner-name"></h1>
+        <div id="materials-container"></div>
+      </div>
+    </div>
+
+    <!-- 🅲 SZEGMENS -->
+    <div id="segmentC" class="segment">
+      <h1>Árfolyamok</h1>
+      <table id="rates-table" border="1" cellpadding="8"
+             style="border-collapse: collapse; width: 100%; text-align: center;">
+        <tbody id="rates-body">
+          {% for material in materials if not loop.first %}
+          <tr>
+            <td>{{ material.name }}</td>
+            <td>{{ material.rate }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 🔄 Árfolyam frissítés -->
+  <script>
+    async function refreshRates() {
+      try {
+        const response = await fetch("/api/rates");
+        const data = await response.json();
+        const tbody = document.getElementById("rates-body");
+        tbody.innerHTML = "";
+        data.forEach(item => {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${item.name}</td><td>${item.rate}</td>`;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Árfolyam frissítés hiba:", err);
+      }
+    }
+    setInterval(refreshRates, 60000);
+  </script>
+
+  <!-- 🧠 A szegmens: azonosító beküldése -->
+  <script>
+    const form = document.getElementById("account-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("nev").value;
+      try {
+        const response = await fetch(`/api/account/${id}`);
+        if (!response.ok) throw new Error("Nincs ilyen számla");
+        const data = await response.json();
+
+        // Megjelenítjük a nevet
+        document.getElementById("owner-name").textContent = data.owner_name;
+
+        // Táblázat HTML betöltése
+        document.getElementById("materials-container").innerHTML = data.html;
+
+        // Megjelenítjük B szegmenst
+        document.getElementById("segmentB").style.display = "block";
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 
 
 def create_app(test_config=None):
@@ -8,7 +8,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
+        DATABASE=os.path.join(app.instance_path, 'trade_engine.sqlite'),
     )
 
     if test_config is None:
@@ -32,5 +32,9 @@ def create_app(test_config=None):
 
     from . import account
     app.register_blueprint(account.bp)
+
+    @app.route("/")
+    def render_app():
+        return render_template("main_page.html")
 
     return app
