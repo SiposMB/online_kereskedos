@@ -69,24 +69,49 @@
   </div>
 
   <!-- 🔄 Árfolyam frissítés -->
-  <script>
-    async function refreshRates() {
-      try {
-        const response = await fetch("/api/rates");
-        const data = await response.json();
-        const tbody = document.getElementById("rates-body");
-        tbody.innerHTML = "";
-        data.forEach(item => {
-          const row = document.createElement("tr");
-          row.innerHTML = `<td>${item.name}</td><td>${item.rate}</td>`;
-          tbody.appendChild(row);
-        });
-      } catch (err) {
-        console.error("Árfolyam frissítés hiba:", err);
-      }
+<script>
+  // Csinálok egy egyedi ID-t minden kliensnek
+  const CID_KEY = "cid_int";
+
+  function newSafeIntId() {
+    // 53-bit: (hi & 0x1F_FFFF) << 32  |  lo
+    const u32 = crypto.getRandomValues(new Uint32Array(2));
+    const hi = u32[0] & 0x001FFFFF;      // keep only 21 bits
+    const lo = u32[1];                   // 32 bits
+    return hi * 4294967296 + lo;         // 2^32
+  }
+
+  let clientId = Number(localStorage.getItem(CID_KEY));
+  if (!Number.isSafeInteger(clientId)) {
+    clientId = newSafeIntId();
+    localStorage.setItem(CID_KEY  , String(clientId));
+  }
+
+  async function refreshRates() {
+    console.log(clientId)
+    try {
+      const response = await fetch("/prices/get_price", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id: clientId })
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const tbody = document.getElementById("rates-body");
+      tbody.innerHTML = "";
+      data.forEach(item => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${item.name}</td><td>${item.rate}</td>`;
+        tbody.appendChild(row);
+      });
+    } catch (err) {
+      console.error("Árfolyam frissítés hiba:", err);
     }
-    setInterval(refreshRates, 60000);
-  </script>
+  }
+
+  setInterval(refreshRates, 6000);
+</script>
+
 
   <!-- 🧠 A szegmens: azonosító beküldése -->
   <script>
