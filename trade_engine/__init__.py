@@ -1,7 +1,10 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, g, jsonify
 
+import time
+
+starttime = time.time()
 
 def create_app(test_config=None):
     # create and configure the app
@@ -24,7 +27,7 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-
+    
     # Add database functionality
     from . import db
     # Hook up everything as defined in db.py
@@ -33,8 +36,14 @@ def create_app(test_config=None):
     from . import account
     app.register_blueprint(account.bp)
 
+    from . import prices
+    app.register_blueprint(prices.bp)
+
     @app.route("/")
     def render_app():
+        # 4 darab nyersanyagom van
+        g.num_res = 4
+        g.starttime = starttime
         return render_template("main_page.html")
 
     return app
