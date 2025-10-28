@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS resources;
 DROP TABLE IF EXISTS traders;
 DROP VIEW IF EXISTS accounts_wide;
+DROP TABLE IF EXISTS prices;
 
 -- Traders
 CREATE TABLE traders (
@@ -94,3 +95,9 @@ SELECT
   COALESCE(MAX(CASE WHEN code = 'FOOD'  THEN amount END), 0) AS FOOD
 FROM base
 GROUP BY trader_id, trader_name;
+
+CREATE TABLE prices (
+  resource_id,
+  N_interval,
+  resource_price
+)

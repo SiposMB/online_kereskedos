@@ -101,7 +101,7 @@
       tbody.innerHTML = "";
       data.forEach(item => {
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${item.name}</td><td>${item.rate}</td>`;
+        row.innerHTML = `<td>${item.name}</td><td>${item.vendor_price}</td>`;
         tbody.appendChild(row);
       });
     } catch (err) {

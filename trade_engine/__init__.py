@@ -38,6 +38,7 @@ def create_app(test_config=None):
 
     from . import prices
     app.register_blueprint(prices.bp)
+    prices.init_app(app)
 
     @app.route("/")
     def render_app():
