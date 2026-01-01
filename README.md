@@ -5,8 +5,7 @@ A [kereskedőjátékokhoz](https://archiv.cserkesz.hu/sites/default/files/sites/
 ## Implementáció
 
 Jelenleg az eszközök ($S$) egy egyszerű Brown-mozgást végeznek egy drift-el együtt:
-$$
-  \mathrm{d}S = \alpha \mathrm{d}t + \sigma \mathrm{d}W
-$$
+
+$\text{d}S = \alpha \text{d}t + \sigma \text{d}W $
 
 A kliensek, vagyis az állomások egy egyedi random tényezővel térnek el az eszközök $S$ árától. 
